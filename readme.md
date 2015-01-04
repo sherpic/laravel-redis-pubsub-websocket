@@ -61,36 +61,36 @@ use App\Reactive\DataStore;
 
 ...
 class EmitController extends BaseController{
-...
+    ...
 
-//init DataStore for furtther use in controller
-protected $store;
+    //init DataStore for further use in controller
+    protected $store;
+    
+    public function __construct(DataStore $store){
+        $this->store = $store;
+    }
 
-public function __construct(DataStore $store)
-{
-$this->store = $store;
-}
+    ...
 
-...
-
-// Sample for sending (JSON)packet asynchronously to client through websocket.
-public function store(){
-if($this->store->publish(
-
-//package content
-[
-//You may add any data content for the payload, here we use 'body' as payload
-'body' => \Input::get('body', null),
-
-//'topic' indicates packets to be sent to client who subscribe to certain 'topic'
-//if 'topic' is not set, the packet will send to all client subscript to websocket
-'topic'=>....
-]
-)){
-return \Response::json(['result' => true] ,200);
-}
-}
-...
+    // Sample for sending (JSON)packet asynchronously to client through websocket.
+    public function store(){
+        if($this->store->publish(
+        
+                //package content
+                [
+                //You may add any data content for the payload, here we use 'body' as payload
+                'body' => \Input::get('body', null),
+                
+                //'topic' indicates packets to be sent to client who subscribe to certain 'topic'
+                //if 'topic' is not set, the packet will send to all client subscript to websocket
+                'topic'=>....
+                ]
+            )
+        ){
+            return \Response::json(['result' => true] ,200);
+        }
+    }
+    ...
 }
 
 ```
@@ -101,44 +101,41 @@ app/App/Reactive/Socket/Push.php
 
 ...
 
-class Push implements WampServerInterface
-{
-
-...
-//Subscription list
-protected $subscribedTopics = array();
-
-//This function fire when client connect to websocket
-public function onSubscribe(ConnectionInterface $conn, $topic)
-{
-//Add topic to subscribedTopics if not exists.
-if (!array_key_exists($topic->getId(), $this->subscribedTopics)) {
-$this->subscribedTopics[$topic->getId()] = $topic;
-}
-}
-...
-
-//This function fire when DataStore::push is called in controller/commands
-public function push($data)
-{
-$entryData = json_decode($data, true);
-
-if(array_key_exists('topic',$entryData)) {
-
-//If 'topic' is set in payload, send to client subscribed to 'topic'
-$topicTitle = $entryData['topic'];
-$topic = $this->subscribedTopics[$topicTitle];
-$topic->broadcast($entryData);
-}else {
-
-//otherwise, send to all clients subscribed to websocket.
-foreach ($this->subscribedTopics as $topic){
-$topic->broadcast($entryData);
-}
-}
-}
-
-...
+class Push implements WampServerInterface{
+    ...
+    //Subscription list
+    protected $subscribedTopics = array();
+    
+    //This function fire when client connect to websocket
+    public function onSubscribe(ConnectionInterface $conn, $topic){
+    
+        //Add topic to subscribedTopics if not exists.
+        if (!array_key_exists($topic->getId(), $this->subscribedTopics)) {
+            $this->subscribedTopics[$topic->getId()] = $topic;
+        }
+    }
+    ...
+    
+    //This function fire when DataStore::push is called in controller/commands
+    public function push($data){
+        $entryData = json_decode($data, true);
+        
+        if(array_key_exists('topic',$entryData)) {
+        
+            //If 'topic' is set in payload, send to client subscribed to 'topic'
+            $topicTitle = $entryData['topic'];
+            $topic = $this->subscribedTopics[$topicTitle];
+            $topic->broadcast($entryData);
+        }else {
+            //otherwise, send to all clients subscribed to websocket.
+            
+            foreach ($this->subscribedTopics as $topic){
+                $topic->broadcast($entryData);
+            }
+        }
+    }
+    
+    ...
 
 }
 ```
@@ -153,12 +150,13 @@ Add following javascript to listen websocket
 
 ```javascript
 var conn = new ab.Session(
+
     //Subscribe to websocket
     'ws://127.0.0.1:3000' , function(){
+    
         //Specify which 'topic' is going to subscribe, we here use 'news' as example
         conn.subscribe('news', function(topic, data) {
-            if(data.body != '')
-            {
+            if(data.body != ''){
                 //do something
             }
         });
