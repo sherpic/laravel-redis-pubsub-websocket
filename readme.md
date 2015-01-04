@@ -153,20 +153,20 @@ Add following javascript to listen websocket
 
 ```javascript
 var conn = new ab.Session(
-//Subscribe to websocket
-'ws://127.0.0.1:3000' , function(){
-//Specify which 'topic' is going to subscribe, we here use 'news' as example
-conn.subscribe('news', function(topic, data) {
-if(data.body != '')
-{
-//do something
-}
-});
-}, function() {
-console.warn('WebSocket connection closed');
-}, {
-'skipSubprotocolCheck': true
-}
+    //Subscribe to websocket
+    'ws://127.0.0.1:3000' , function(){
+        //Specify which 'topic' is going to subscribe, we here use 'news' as example
+        conn.subscribe('news', function(topic, data) {
+            if(data.body != '')
+            {
+                //do something
+            }
+        });
+    }, function() {
+        console.warn('WebSocket connection closed');
+    }, {
+        'skipSubprotocolCheck': true
+    }
 );
 ```
 
