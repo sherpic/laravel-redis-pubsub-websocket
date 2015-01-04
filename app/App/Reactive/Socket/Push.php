@@ -94,12 +94,16 @@ class Push implements WampServerInterface
     {
 
         $entryData = json_decode($data, true);
+        if(array_key_exists('topic',$entryData)) {
+            $topicTitle = $entryData['topic'];
+            $topic = $this->subscribedTopics[$topicTitle];
+            $topic->broadcast($entryData);
+        }else {
+            foreach ($this->subscribedTopics as $topic){
+                $topic->broadcast($entryData);
+            }
+        }
 
-        $topicTitle = $entryData['topic'];
-        $topic = $this->subscribedTopics[$topicTitle];
-
-
-        $topic->broadcast($entryData);
 
     }
 }
